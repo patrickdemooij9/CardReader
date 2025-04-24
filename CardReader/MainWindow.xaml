@@ -1,0 +1,16 @@
+﻿<Window x:Class="CardReader.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CardReader"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Button Content="Upload Image" HorizontalAlignment="Center" Margin="0,317,0,0" VerticalAlignment="Top" Click="Button_Click"/>
+        <Label Content="Label" Name="TestLabel" HorizontalAlignment="Left" Margin="612,61,0,0" VerticalAlignment="Top"/>
+        <Image HorizontalAlignment="Left" Name="TestImage" Height="190" Margin="100,61,0,0" VerticalAlignment="Top" Width="303"/>
+        <ListBox Name="ListBox" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="502,94,0,10"/>
+
+    </Grid>
+</Window>
