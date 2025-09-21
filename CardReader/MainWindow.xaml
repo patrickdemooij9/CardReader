@@ -7,10 +7,20 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <Button Content="Upload Image" HorizontalAlignment="Center" Margin="0,317,0,0" VerticalAlignment="Top" Click="Button_Click"/>
-        <Label Content="Label" Name="TestLabel" HorizontalAlignment="Left" Margin="612,61,0,0" VerticalAlignment="Top"/>
-        <Image HorizontalAlignment="Left" Name="TestImage" Height="190" Margin="100,61,0,0" VerticalAlignment="Top" Width="303"/>
-        <ListBox Name="ListBox" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="502,94,0,10"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="33*"/>
+            <RowDefinition Height="184*"/>
+        </Grid.RowDefinitions>
+        <Button x:Name="UploadImageBtn" Content="Upload Image" Margin="0,0,10,68" Click="Button_Click" HorizontalAlignment="Right" Width="102" Height="22" VerticalAlignment="Bottom" Grid.Row="1"/>
+        <Image Name="TestImage" Height="399" Margin="10,10,469,0" VerticalAlignment="Top" Grid.RowSpan="2"/>
+        <TextBox x:Name="JsonExample" Margin="0,0,0,95" TextWrapping="Wrap" Text="TextBox" HorizontalAlignment="Right" Width="320" Grid.RowSpan="2"/>
+        <Button x:Name="DownloadButton" Content="Download JSON" Margin="0,0,138,68" Click="DownloadButton_Click" HorizontalAlignment="Right" Width="90" Height="20" VerticalAlignment="Bottom" Grid.Row="1"/>
+        <Button x:Name="ResetBtn" Content="Reset" Margin="0,0,254,63" Click="ResetBtn_Click" HorizontalAlignment="Right" Width="33" Height="20" VerticalAlignment="Bottom" Grid.Row="1"/>
+        <ComboBox x:Name="ModeSelectorBox" HorizontalAlignment="Center" Margin="0,0,0,24" Grid.Row="1" VerticalAlignment="Bottom" Width="120" SelectedIndex="0">
+            <ComboBoxItem Content="AI Reader"/>
+            <ComboBoxItem Content="Update"/>
+        </ComboBox>
+        <Button x:Name="NextImageBtn" Content="Next image" HorizontalAlignment="Right" Margin="0,0,17,10" Grid.Row="1" VerticalAlignment="Bottom"/>
 
     </Grid>
 </Window>

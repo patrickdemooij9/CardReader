@@ -1,0 +1,2 @@
+Please use the attached image and read various elements of the card. Return the result as JSON as a key/value pair of each element. The value should always be a single string:
+{properties}

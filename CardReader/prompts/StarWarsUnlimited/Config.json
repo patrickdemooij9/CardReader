@@ -1,0 +1,124 @@
+{
+  "initialPrompt": "You are a bot able to read cards. I need you to read the attached card and provide me the type of card. You'll find it on the top and should be either Unit, Event or Upgrade. Only return the type.",
+  "types": [
+    {
+      "type": "Unit",
+      "promptFile": "UnitPrompt.txt",
+      "properties": [
+        {
+          "alias": "Cost",
+          "description": "Top left of the card",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Card Type",
+          "description": "Top, either Unit, Upgrade or Event",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Name",
+          "description": "Under type and location",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Subname",
+          "description": "Optionally, under the name",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Power",
+          "description": "Located in the red icon in the middle of the image",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Health",
+          "description": "Located in the blue icon in the middle of the image",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Traits_multiple",
+          "description": "Located between Power and Health, seperated by dots",
+          "toTitleCase": true,
+          "split": "•"
+        },
+        {
+          "alias": "Abilities",
+          "description": "Located under tags in the big area. Surround bold text with the | character.",
+          "toTitleCase": false
+        }
+      ]
+    },
+    {
+      "type": "Event",
+      "promptFile": "EventPrompt.txt",
+      "properties": [
+        {
+          "alias": "Cost",
+          "description": "Top left of the card",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Card Type",
+          "description": "Top, either Unit, Upgrade or Event",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Name",
+          "description": "Under type",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Traits_multiple",
+          "description": "Located under the Name",
+          "toTitleCase": true,
+          "split": "•"
+        },
+        {
+          "alias": "Abilities",
+          "description": "Located under tags in the big area. Surround bold text with the | character.",
+          "toTitleCase": false
+        }
+      ]
+    },
+    {
+      "type": "Upgrade",
+      "promptFile": "UpgradePrompt.txt",
+      "properties": [
+        {
+          "alias": "Cost",
+          "description": "Top left of the card",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Card Type",
+          "description": "Top, either Unit, Upgrade or Event",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Bonus Power",
+          "description": "On the bottom left in the red icon"
+        },
+        {
+          "alias": "Bonus Health",
+          "description": "On the bottom right in the blue icon"
+        },
+        {
+          "alias": "Name",
+          "description": "Located between the bonus power and bonus health in the top line.",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Traits_multiple",
+          "description": "Located under the Name",
+          "toTitleCase": true,
+          "split": "•"
+        },
+        {
+          "alias": "Abilities",
+          "description": "Located above the name in the big area. Surround bold text with the | character.",
+          "toTitleCase": false
+        }
+      ]
+    }
+  ]
+}

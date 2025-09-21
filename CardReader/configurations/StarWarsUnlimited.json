@@ -1,0 +1,40 @@
+[
+	{
+		"Alias": "Type",
+		"PosX1": 16.8,
+		"PosX2": 40,
+		"PosY1": 3,
+		"PosY2": 5.5,
+		"IgnoreWhitespace": true,
+		"IgnoreSpecialCharacters": true
+	},
+	{
+		"Alias": "Cost",
+		"PosX1": 4.65,
+		"PosX2": 16.28,
+		"PosY1": 3.33,
+		"PosY2": 10.9,
+		"IgnoreWhitespace": true,
+		"IgnoreSpecialCharacters": true
+	},
+	{
+		"Alias": "Name",
+		"PosX1": 17.44,
+		"PosX2": 93,
+		"PosY1": 5.33,
+		"PosY2": 11,
+		"IgnoreWhitespace": true
+	},
+	{
+		"Alias": "Location",
+		"PosX1": 42,
+		"PosX2": 88,
+		"PosY1": 3,
+		"PosY2": 5.8,
+		"IgnoreWhitespace": true,
+		"IgnoreSpecialCharacters": true,
+		"Conditions": {
+			"Type": ["UNIT"]
+		}
+	}
+]
