@@ -1,5 +1,30 @@
 {
   "initialPrompt": "You are a bot able to read cards. I need you to read the attached card and provide me the type of card. You'll find it on the top and should be either Unit, Event or Upgrade. Only return the type.",
+  "presets": [
+    {
+      "name": "Organized play",
+      "id": 0,
+      "variants": [
+        {
+          "id": 5,
+          "properties": {
+            "Name": "Organized play",
+            "SWU Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "5"
+          }
+        },
+        {
+          "id": 8,
+          "properties": {
+            "Name": "Organized play Foil",
+            "SWU Id": "",
+            "VariantTypeId": "8"
+          }
+        }
+      ]
+    }
+  ],
   "types": [
     {
       "type": "Unit",
@@ -13,6 +38,11 @@
         {
           "alias": "Card Type",
           "description": "Top, either Unit, Upgrade or Event",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Location",
+          "description": "To the right of Card Type, either Space, Ground",
           "toTitleCase": true
         },
         {
@@ -45,6 +75,16 @@
           "alias": "Abilities",
           "description": "Located under tags in the big area. Surround bold text with the | character.",
           "toTitleCase": false
+        },
+        {
+          "alias": "Aspects_multiple",
+          "description": "Located below the cost, can be multiple icons. Depending on the colors, return the following values: Red = Aggression, Blue = Vigilance, Green = Command, Yellow = Cunning, Black = Villainy. Return as a list seperated by commas.",
+          "toTitleCase": false,
+          "split": ","
+        },
+        {
+          "alias": "Amount",
+          "constant": 3
         }
       ]
     },
@@ -77,6 +117,16 @@
           "alias": "Abilities",
           "description": "Located under tags in the big area. Surround bold text with the | character.",
           "toTitleCase": false
+        },
+        {
+          "alias": "Aspects_multiple",
+          "description": "Located below the cost, can be multiple icons. Depending on the colors, return the following values: Red = Aggression, Blue = Vigilance, Green = Command, Yellow = Cunning, Black = Villainy. Return as a list seperated by commas.",
+          "toTitleCase": false,
+          "split": ","
+        },
+        {
+          "alias": "Amount",
+          "constant": 3
         }
       ]
     },
@@ -117,6 +167,16 @@
           "alias": "Abilities",
           "description": "Located above the name in the big area. Surround bold text with the | character.",
           "toTitleCase": false
+        },
+        {
+          "alias": "Aspects_multiple",
+          "description": "Located below the cost, can be multiple icons. Depending on the colors, return the following values: Red = Aggression, Blue = Vigilance, Green = Command, Yellow = Cunning, Black = Villainy. Return as a list seperated by commas.",
+          "toTitleCase": false,
+          "split": ","
+        },
+        {
+          "alias": "Amount",
+          "constant": 3
         }
       ]
     }

@@ -1,6 +1,7 @@
 ﻿using CardReader.models;
 using Microsoft.Win32;
 using Mscc.GenerativeAI;
+using Mscc.GenerativeAI.Types;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Processing;
@@ -9,6 +10,7 @@ using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Windows;
@@ -31,12 +33,8 @@ namespace CardReader
     /// </summary>
     public partial class MainWindow : Window
     {
-        private List<Ability> _abilities = new List<Ability>
-        {
-            new Ability("Name", new SixLabors.ImageSharp.Rectangle(300, 1150, 900, 120)),
-            new Ability("Type", new SixLabors.ImageSharp.Rectangle(320, 1300, 800, 100)),
-            new Ability("Ability", new SixLabors.ImageSharp.Rectangle(170, 1430, 1200, 350)),
-        };
+        private int fileNameIndex = 0;
+        private string[] fileNames = [];
 
         private SixLabors.ImageSharp.Image _image;
 
@@ -46,36 +44,32 @@ namespace CardReader
         public MainWindow()
         {
             InitializeComponent();
+
+            ModeSelectorBox.Items.Add(new ListBoxItem() { Content = "AI Read", Tag = 0 });
+            ModeSelectorBox.Items.Add(new ListBoxItem() { Content = "Update image", Tag = 1 });
+            ModeSelectorBox.Items.Add(new ListBoxItem() { Content = "Set variants", Tag = 2 });
+
+            var config = GetConfig();
+            foreach (var preset in config.Presets)
+            {
+                PresetComboBox.Items.Add(new ListBoxItem { Content = preset.Name, Tag = preset.Id });
+            }
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog fileDialog = new OpenFileDialog();
+            fileDialog.Multiselect = true;
             fileDialog.DefaultExt = ".png"; // Required file extension
 
             var result = fileDialog.ShowDialog();
 
             if (result.HasValue)
             {
-                AddLatestDataToList();
-                using (var stream = new MemoryStream(File.ReadAllBytes(fileDialog.FileName)))
-                {
-                    stream.Position = 0;
-                    TestImage.Source = BitmapFrame.Create(
-                        stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-                }
+                fileNameIndex = 0;
+                fileNames = fileDialog.FileNames;
 
-                // Create a new thread to currently handle the ReadWithAI call as it takes a while and we don't want to block the UI thread.
-                _ = Task.Run(async () =>
-                {
-                    var result = await ReadWithAI(fileDialog.FileName);
-
-                    // If you need to update the UI after completion, use Dispatcher.Invoke:
-                    Dispatcher.Invoke(() => 
-                    {
-                        JsonExample.Text = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true});
-                    });
-                });
+                HandleCurrentImage();
 
                 /*
                 //SWU- 428x589, crop to 75, 35, 325, 25
@@ -192,18 +186,45 @@ namespace CardReader
             }
         }
 
+        private void HandleCurrentImage()
+        {
+            AddLatestDataToList();
+
+            var currentImageFile = fileNames[fileNameIndex];
+            using (var stream = new MemoryStream(File.ReadAllBytes(currentImageFile)))
+            {
+                stream.Position = 0;
+                TestImage.Source = BitmapFrame.Create(
+                    stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                FileNameLabel.Content = System.IO.Path.GetFileName(currentImageFile);
+            }
+            _imageBase64 = Convert.ToBase64String(File.ReadAllBytes(currentImageFile));
+
+            var selectedValue = (ModeSelectorBox.SelectedValue as ListBoxItem).Tag;
+            // Create a new thread to currently handle the ReadWithAI call as it takes a while and we don't want to block the UI thread.
+            _ = Task.Run(async () =>
+            {
+                if (selectedValue.Equals(0))
+                {
+                    var result = await ReadWithAI(currentImageFile);
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        JsonExample.Text = JsonSerializer.Serialize(new[] { result }, new JsonSerializerOptions { WriteIndented = true });
+                    });
+                }
+            });
+        }
+
         private async Task<Dictionary<string, string>> ReadWithAI(string imagePath)
         {
-            _imageBase64 = Convert.ToBase64String(File.ReadAllBytes(imagePath));
-
-            var googleAI = new GoogleAI(apiKey: "AIzaSyDYVjSB6VZ9yBRDPIAF3_K2h9EqUPPDfg8");
+            var googleAI = new GoogleAI(apiKey: "");
             var model = googleAI.GenerativeModel(model: Model.Gemini25Flash);
             var generationConfig = new GenerationConfig()
             {
                 ResponseMimeType = "application/json",
             };
-            var configJson = File.ReadAllText("prompts/StarWarsUnlimited/Config.json");
-            var config = JsonSerializer.Deserialize<AIConfigModel>(configJson) ?? throw new Exception("Failed to load config");
+            var config = GetConfig();
 
             var typeRequest = new GenerateContentRequest(config.InitialPrompt);
             typeRequest.AddPart(new InlineData
@@ -218,7 +239,7 @@ namespace CardReader
 
             var prompt = File.ReadAllText($"prompts/StarWarsUnlimited/{typeConfig.PromptFile}");
             var propertiesStringBuilder = new StringBuilder();
-            foreach (var property in typeConfig.Properties)
+            foreach (var property in typeConfig.Properties.Where(it => !it.Constant.HasValue))
             {
                 propertiesStringBuilder.AppendLine($"- {property.Alias} ({property.Description})");
             }
@@ -238,6 +259,10 @@ namespace CardReader
                 return [];
             }
             var result = JsonSerializer.Deserialize<Dictionary<string, string>>(response.Text) ?? new Dictionary<string, string>();
+            foreach (var constantValue in typeConfig.Properties.Where(it => it.Constant.HasValue))
+            {
+                result[constantValue.Alias] = constantValue.Constant!.Value.ToString();
+            }
             foreach (var nonCapsKey in typeConfig.Properties.Where(it => it.ToTitleCase))
             {
                 if (result.TryGetValue(nonCapsKey.Alias, out string? value) && !string.IsNullOrWhiteSpace(value))
@@ -252,37 +277,12 @@ namespace CardReader
                     result[splitKey.Alias] = string.Join(",", traits.Split(splitKey.Split).Select(it => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(it.Trim().ToLower())));
                 }
             }
-            
-            result.Add("Aspects_multiple", "[todo]");
+
             result.Add("SWU Id", "[todo]");
             result.Add("TTS Id", "[todo]");
             result.Add("Rarity", "[todo]");
             result.Add("image_base64", "[image]");
             return result;
-        }
-
-        private void CopyAbility(object sender, MouseButtonEventArgs e)
-        {
-            var listBox = sender as ListBox;
-            Clipboard.SetText(listBox.SelectedItem.ToString()!.Replace("\n", ""));
-        }
-
-        private void ShowImage(object sender, MouseButtonEventArgs e)
-        {
-            var listBox = sender as ListBox;
-            var ability = _abilities[listBox.SelectedIndex];
-
-            _image.Mutate(it => it.Resize(new SixLabors.ImageSharp.Size(1488, 2079))
-            .Grayscale()
-            .Crop(ability.Location));
-
-            using (var stream = new MemoryStream())
-            {
-                _image.SaveAsJpeg(stream);
-                stream.Position = 0;
-                TestImage.Source = BitmapFrame.Create(
-                    stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-            }
         }
 
         private void DownloadButton_Click(object sender, RoutedEventArgs e)
@@ -293,7 +293,7 @@ namespace CardReader
             {
                 DefaultExt = ".json",
                 Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*",
-                FileName = "cards.json"
+                FileName = $"cards{DateTime.UtcNow.ToString("yyyyMMddHHmmss")}.json"
             };
             var result = saveFileDialog.ShowDialog();
             if (result.HasValue && !string.IsNullOrWhiteSpace(saveFileDialog.FileName))
@@ -306,15 +306,15 @@ namespace CardReader
         {
             try
             {
-                var data = JsonSerializer.Deserialize<Dictionary<string, string>>(JsonExample.Text);
-                if (data != null)
+                var data = JsonSerializer.Deserialize<Dictionary<string, string>[]>(JsonExample.Text) ?? [];
+                foreach (var entry in data)
                 {
-                    if (data.ContainsKey("image_base64"))
+                    if (entry.ContainsKey("image_base64"))
                     {
-                        data["image_base64"] = _imageBase64;
+                        entry["image_base64"] = _imageBase64;
                     }
 
-                    _data.Add(data);
+                    _data.Add(entry);
                 }
                 JsonExample.Text = string.Empty;
             }
@@ -327,6 +327,123 @@ namespace CardReader
         private void ResetBtn_Click(object sender, RoutedEventArgs e)
         {
             _data = new List<Dictionary<string, string>>();
+        }
+
+        private void NextImageBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (fileNameIndex < fileNames.Length - 1)
+            {
+                fileNameIndex++;
+                HandleCurrentImage();
+            }
+        }
+
+        private void SearchBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var httpClient = new HttpClient();
+            var query = SearchTxt.Text.Trim().ToLower();
+
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var selectedMode = (ModeSelectorBox.SelectedValue as ListBoxItem).Tag;
+            var currentData = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(JsonExample.Text) ?? [];
+            _ = Task.Run(async () =>
+            {
+                var response = await httpClient.PostAsJsonAsync<SearchPostModel>("https://sw-unlimited-db.com/api/cards/query", new SearchPostModel
+                {
+                    PageNumber = 1,
+                    PageSize = 10,
+                    Query = query
+                });
+                var result = await response.Content.ReadFromJsonAsync<SearchResponseModel>();
+                if (result.Items.Length > 1)
+                {
+                    MessageBox.Show("Multiple results found, please refine your search.");
+                    return;
+                }
+                if (result.Items.Length == 0)
+                {
+                    MessageBox.Show("No results found.");
+                    return;
+                }
+                var firstResult = result.Items[0];
+
+                var data = new List<Dictionary<string, string>>();
+                byte[]? imageBytes = null;
+                if (selectedMode.Equals(2))
+                {
+                    data = currentData;
+
+                    foreach(var entry in data)
+                    {
+                        entry.Add("ParentId", firstResult.BaseId.ToString());
+                    }
+                }
+                else
+                {
+                    var entry = new Dictionary<string, string>()
+                    {
+                        //{ "Id", firstResult.VariantId.ToString() },
+                        { "Id", firstResult.BaseId.ToString() },
+                        { "Name", firstResult.DisplayName },
+                        { "image_base64", "[image]" }
+                    };
+
+                    foreach (var attribute in firstResult.Attributes)
+                    {
+                        var key = attribute.Value.Length > 1 ? $"{attribute.Key}_multiple" : attribute.Key;
+                        entry.Add(key, string.Join(",", attribute.Value));
+                    }
+
+                    data.Add(entry);
+
+                    imageBytes = await httpClient.GetByteArrayAsync(firstResult.ImageUrl.ImageUrl);
+                }
+
+                Dispatcher.Invoke(() =>
+                {
+                    JsonExample.Text = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+
+                    if (imageBytes != null)
+                    {
+                        using (var stream = new MemoryStream(imageBytes))
+                        {
+                            stream.Position = 0;
+                            Image2.Source = BitmapFrame.Create(
+                                stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                        }
+                    }
+                });
+            });
+        }
+
+        private AIConfigModel GetConfig()
+        {
+            var configJson = File.ReadAllText("prompts/StarWarsUnlimited/Config.json");
+            return JsonSerializer.Deserialize<AIConfigModel>(configJson) ?? throw new Exception("Failed to load config");
+        }
+
+        private void PresetComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var config = GetConfig();
+
+            var listBoxItem = e.AddedItems.Cast<ListBoxItem>().FirstOrDefault();
+            if (listBoxItem != null)
+            {
+                var preset = config.Presets.FirstOrDefault(it => it.Id.ToString().Equals(listBoxItem.Tag?.ToString(), StringComparison.OrdinalIgnoreCase));
+                if (preset != null)
+                {
+                    var data = new List<Dictionary<string, string>>();
+                    foreach (var variant in preset.Variants)
+                    {
+                        data.Add(variant.Properties);
+                    }
+
+                    JsonExample.Text = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+                }
+            }
+
+            PresetComboBox.SelectedIndex = -1;
         }
     }
 }

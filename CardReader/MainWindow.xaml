@@ -5,22 +5,25 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CardReader"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="MainWindow" Height="600" Width="1200
+      ">
+    <Grid Width="1200" Height="592">
         <Grid.RowDefinitions>
-            <RowDefinition Height="33*"/>
-            <RowDefinition Height="184*"/>
+            <RowDefinition Height="49*"/>
+            <RowDefinition Height="543*"/>
         </Grid.RowDefinitions>
         <Button x:Name="UploadImageBtn" Content="Upload Image" Margin="0,0,10,68" Click="Button_Click" HorizontalAlignment="Right" Width="102" Height="22" VerticalAlignment="Bottom" Grid.Row="1"/>
-        <Image Name="TestImage" Height="399" Margin="10,10,469,0" VerticalAlignment="Top" Grid.RowSpan="2"/>
+        <Image Name="TestImage" Height="423" VerticalAlignment="Top" Grid.RowSpan="2" HorizontalAlignment="Left" Width="369"/>
         <TextBox x:Name="JsonExample" Margin="0,0,0,95" TextWrapping="Wrap" Text="TextBox" HorizontalAlignment="Right" Width="320" Grid.RowSpan="2"/>
         <Button x:Name="DownloadButton" Content="Download JSON" Margin="0,0,138,68" Click="DownloadButton_Click" HorizontalAlignment="Right" Width="90" Height="20" VerticalAlignment="Bottom" Grid.Row="1"/>
         <Button x:Name="ResetBtn" Content="Reset" Margin="0,0,254,63" Click="ResetBtn_Click" HorizontalAlignment="Right" Width="33" Height="20" VerticalAlignment="Bottom" Grid.Row="1"/>
-        <ComboBox x:Name="ModeSelectorBox" HorizontalAlignment="Center" Margin="0,0,0,24" Grid.Row="1" VerticalAlignment="Bottom" Width="120" SelectedIndex="0">
-            <ComboBoxItem Content="AI Reader"/>
-            <ComboBoxItem Content="Update"/>
-        </ComboBox>
-        <Button x:Name="NextImageBtn" Content="Next image" HorizontalAlignment="Right" Margin="0,0,17,10" Grid.Row="1" VerticalAlignment="Bottom"/>
+        <ComboBox x:Name="ModeSelectorBox" HorizontalAlignment="Center" Margin="0,485,0,0" Grid.Row="1" VerticalAlignment="Top" Width="120" Height="22"/>
+        <Button x:Name="NextImageBtn" Content="Next image" HorizontalAlignment="Right" Margin="0,0,17,10" Grid.Row="1" VerticalAlignment="Bottom" Click="NextImageBtn_Click" Height="20" Width="65"/>
+        <TextBox x:Name="SearchTxt" HorizontalAlignment="Left" Margin="50,0,0,28" Grid.Row="1" TextWrapping="Wrap" Text="Search..." VerticalAlignment="Bottom" Width="120" Height="18"/>
+        <Button x:Name="SearchBtn" Content="Search" HorizontalAlignment="Left" Margin="205,0,0,28" Grid.Row="1" Click="SearchBtn_Click" Height="20" VerticalAlignment="Bottom" Width="39"/>
+        <Image x:Name="Image2" HorizontalAlignment="Left" Height="418" Margin="390,7,0,0" VerticalAlignment="Top" Width="312" Grid.Row="1"/>
+        <Label x:Name="FileNameLabel" Content="Label" HorizontalAlignment="Left" Margin="132,0,0,131" Grid.Row="1" VerticalAlignment="Bottom" RenderTransformOrigin="0.553,1.426" Height="26" Width="38"/>
+        <ComboBox x:Name="PresetComboBox" HorizontalAlignment="Left" Margin="390,489,0,0" Grid.Row="1" VerticalAlignment="Top" Width="120" SelectionChanged="PresetComboBox_SelectionChanged"/>
 
     </Grid>
 </Window>

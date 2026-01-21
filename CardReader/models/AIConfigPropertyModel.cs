@@ -17,5 +17,7 @@ namespace CardReader.models
         public bool ToTitleCase { get; set; }
         [JsonPropertyName("split")]
         public string Split { get; set; }
+        [JsonPropertyName("constant")]
+        public int? Constant { get; set; }
     }
 }

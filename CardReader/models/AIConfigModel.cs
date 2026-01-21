@@ -11,6 +11,10 @@ namespace CardReader.models
     {
         [JsonPropertyName("initialPrompt")]
         public string InitialPrompt { get; set; }
+
+        [JsonPropertyName("presets")]
+        public PresetItemModel[] Presets { get; set; }
+
         [JsonPropertyName("types")]
         public List<AIConfigTypeModel> Types { get; set; }
     }
