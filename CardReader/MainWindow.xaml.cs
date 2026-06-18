@@ -41,6 +41,35 @@ namespace CardReader
         private string _imageBase64 = string.Empty;
         private List<Dictionary<string, string>> _data = new List<Dictionary<string, string>>();
 
+        private Dictionary<string, string>? _prefetchedResult = null;
+        private int _prefetchedIndex = -1;
+        private bool _prefetchedIsDoubleSided = false;
+
+        private bool _currentCardIsDoubleSided = false;
+        private string _backImageBase64 = string.Empty;
+
+        private int? _selectedPresetId = null;
+        private int _currentMode = -1;
+
+        private string _gameName = "StarWarsUnlimited";
+
+        private void ShowLoading(string status = "Processing with AI...")
+        {
+            Dispatcher.Invoke(() =>
+            {
+                LoadingStatusText.Text = status;
+                LoadingIndicator.Visibility = Visibility.Visible;
+            });
+        }
+
+        private void HideLoading()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                LoadingIndicator.Visibility = Visibility.Collapsed;
+            });
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -200,26 +229,208 @@ namespace CardReader
             }
             _imageBase64 = Convert.ToBase64String(File.ReadAllBytes(currentImageFile));
 
+            // Update current mode
+            _currentMode = (int?)((ModeSelectorBox.SelectedValue as ListBoxItem)?.Tag) ?? -1;
+
+            // Display preset data if a preset is selected
+            if (_selectedPresetId.HasValue)
+            {
+                var config = GetConfig();
+                var preset = config.Presets.FirstOrDefault(it => it.Id == _selectedPresetId.Value);
+                if (preset != null)
+                {
+                    var presetData = new List<Dictionary<string, string>>();
+                    foreach (var variant in preset.Variants)
+                    {
+                        presetData.Add(variant.Properties);
+                    }
+                    Dispatcher.Invoke(() =>
+                    {
+                        JsonExample.Text = JsonSerializer.Serialize(presetData, new JsonSerializerOptions { WriteIndented = true });
+                    });
+
+                    // In Mode 2 (Set variants), automatically search for the card based on AI read
+                    if (_currentMode == 2)
+                    {
+                        var presetDataJson = JsonExample.Text;
+                        _ = Task.Run(async () =>
+                        {
+                            await AutoSearchCardForPreset(currentImageFile, presetDataJson);
+                        });
+                    }
+                }
+                return;
+            }
+
             var selectedValue = (ModeSelectorBox.SelectedValue as ListBoxItem).Tag;
+            string? potentialBackBase64 = fileNameIndex + 1 < fileNames.Length
+                ? Convert.ToBase64String(File.ReadAllBytes(fileNames[fileNameIndex + 1]))
+                : null;
+
             // Create a new thread to currently handle the ReadWithAI call as it takes a while and we don't want to block the UI thread.
             _ = Task.Run(async () =>
             {
                 if (selectedValue.Equals(0))
                 {
-                    var result = await ReadWithAI(currentImageFile);
-
-                    Dispatcher.Invoke(() =>
+                    ShowLoading("Reading image with AI...");
+                    try
                     {
-                        JsonExample.Text = JsonSerializer.Serialize(new[] { result }, new JsonSerializerOptions { WriteIndented = true });
-                    });
+                        Dictionary<string, string> result;
+                        bool isDoubleSided;
+
+                        // Check if we have a prefetched result for the current image
+                        if (_prefetchedResult != null && _prefetchedIndex == fileNameIndex)
+                        {
+                            result = _prefetchedResult;
+                            isDoubleSided = _prefetchedIsDoubleSided;
+                            _prefetchedResult = null;
+                            _prefetchedIndex = -1;
+                            _prefetchedIsDoubleSided = false;
+                        }
+                        else
+                        {
+                            (result, isDoubleSided) = await ReadWithAI(_imageBase64, potentialBackBase64);
+                        }
+
+                        _currentCardIsDoubleSided = isDoubleSided;
+                        if (isDoubleSided)
+                        {
+                            _backImageBase64 = potentialBackBase64!;
+                            var backImageFile = fileNames[fileNameIndex + 1];
+                            Dispatcher.Invoke(() =>
+                            {
+                                using var stream = new MemoryStream(File.ReadAllBytes(backImageFile));
+                                stream.Position = 0;
+                                Image2.Source = BitmapFrame.Create(stream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                            });
+                        }
+                        else
+                        {
+                            _backImageBase64 = string.Empty;
+                        }
+
+                        Dispatcher.Invoke(() =>
+                        {
+                            JsonExample.Text = JsonSerializer.Serialize(new[] { result }, new JsonSerializerOptions { WriteIndented = true });
+
+                            int nextFrontIndex = fileNameIndex + (isDoubleSided ? 2 : 1);
+                            if (nextFrontIndex < fileNames.Length)
+                            {
+                                _ = PrefetchNextImage(nextFrontIndex);
+                            }
+                        });
+                    }
+                    finally
+                    {
+                        HideLoading();
+                    }
                 }
+                /*else
+                {
+                    // Even in non-AI modes, prefetch for when we switch to AI mode
+                    if (fileNameIndex < fileNames.Length - 1)
+                    {
+                        _ = PrefetchNextImage();
+                    }
+                }*/
             });
         }
 
-        private async Task<Dictionary<string, string>> ReadWithAI(string imagePath)
+        private async Task AutoSearchCardForPreset(string imagePath, string presetDataJson)
+        {
+            try
+            {
+                ShowLoading("Reading image with AI...");
+
+                // Get the AI read result to extract name and subname
+                var (aiResult, _) = await ReadWithAI(imagePath, Convert.ToBase64String(File.ReadAllBytes(imagePath)));
+
+                // Extract name - use "Name" or similar field that exists in your AI result
+                if (!aiResult.TryGetValue("Name", out var searchQuery) || string.IsNullOrWhiteSpace(searchQuery))
+                {
+                    HideLoading();
+                    return;
+                }
+
+                // Optionally append subname if it exists
+                if (aiResult.TryGetValue("Subname", out var subname) && !string.IsNullOrWhiteSpace(subname))
+                {
+                    searchQuery = $"{searchQuery} {subname}";
+                }
+
+                searchQuery = searchQuery.Trim().ToLower();
+
+                ShowLoading("Searching database...");
+
+                var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                var response = await httpClient.PostAsJsonAsync<SearchPostModel>("https://sw-unlimited-db.com/api/cards/query", new SearchPostModel
+                {
+                    PageNumber = 1,
+                    PageSize = 10,
+                    Query = searchQuery
+                });
+                var result = await response.Content.ReadFromJsonAsync<SearchResponseModel>();
+
+                if (result?.Items?.Length == 1)
+                {
+                    var firstResult = result.Items[0];
+                    var data = new List<Dictionary<string, string>>();
+
+                    var currentData = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(presetDataJson) ?? [];
+                    data = currentData;
+
+                    foreach (var entry in data)
+                    {
+                        entry["ParentId"] = firstResult.BaseId.ToString();
+                    }
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        JsonExample.Text = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+                    });
+                }
+            }
+            catch
+            {
+                // If auto-search fails, just ignore it - the user can still manually search
+            }
+            finally
+            {
+                HideLoading();
+            }
+        }
+
+        private async Task PrefetchNextImage(int nextFrontIndex)
+        {
+            try
+            {
+                if (nextFrontIndex < fileNames.Length)
+                {
+                    var nextImageFile = fileNames[nextFrontIndex];
+                    var nextImageBase64 = Convert.ToBase64String(File.ReadAllBytes(nextImageFile));
+                    string? nextBackImageBase64 = nextFrontIndex + 1 < fileNames.Length
+                        ? Convert.ToBase64String(File.ReadAllBytes(fileNames[nextFrontIndex + 1]))
+                        : null;
+
+                    (_prefetchedResult, _prefetchedIsDoubleSided) = await ReadWithAI(nextImageBase64, nextBackImageBase64);
+                    _prefetchedIndex = nextFrontIndex;
+                }
+            }
+            catch
+            {
+                // If prefetch fails, just ignore it - the user can still manually fetch on the next image
+                _prefetchedResult = null;
+                _prefetchedIndex = -1;
+                _prefetchedIsDoubleSided = false;
+            }
+        }
+
+        private async Task<(Dictionary<string, string> Result, bool IsDoubleSided)> ReadWithAI(string frontImageBase64, string? backImageBase64 = null)
         {
             var googleAI = new GoogleAI(apiKey: "");
-            var model = googleAI.GenerativeModel(model: Model.Gemini25Flash);
+            var model = googleAI.GenerativeModel(model: Model.GeminiFlashLiteLatest);
             var generationConfig = new GenerationConfig()
             {
                 ResponseMimeType = "application/json",
@@ -229,7 +440,7 @@ namespace CardReader
             var typeRequest = new GenerateContentRequest(config.InitialPrompt);
             typeRequest.AddPart(new InlineData
             {
-                Data = _imageBase64,
+                Data = frontImageBase64,
                 MimeType = "image/png",
             });
             var typeResponse = await model.GenerateContent(typeRequest);
@@ -237,7 +448,7 @@ namespace CardReader
             var typeConfig = config.Types.FirstOrDefault(it => it.Type.Equals(typeResponse?.Text?.Trim(), StringComparison.OrdinalIgnoreCase));
             if (typeConfig is null) throw new Exception("Failed to find type config");
 
-            var prompt = File.ReadAllText($"prompts/StarWarsUnlimited/{typeConfig.PromptFile}");
+            var prompt = File.ReadAllText($"prompts/{_gameName}/{typeConfig.PromptFile}");
             var propertiesStringBuilder = new StringBuilder();
             foreach (var property in typeConfig.Properties.Where(it => !it.Constant.HasValue))
             {
@@ -249,14 +460,14 @@ namespace CardReader
             request.GenerationConfig = generationConfig;
             request.AddPart(new InlineData
             {
-                Data = _imageBase64,
+                Data = frontImageBase64,
                 MimeType = "image/png",
             });
 
             var response = await model.GenerateContent(request);
             if (string.IsNullOrWhiteSpace(response?.Text))
             {
-                return [];
+                return ([], false);
             }
             var result = JsonSerializer.Deserialize<Dictionary<string, string>>(response.Text) ?? new Dictionary<string, string>();
             foreach (var constantValue in typeConfig.Properties.Where(it => it.Constant.HasValue))
@@ -278,11 +489,58 @@ namespace CardReader
                 }
             }
 
+            if (typeConfig.IsDoubleSided && backImageBase64 != null && typeConfig.BackSidePromptFile != null && typeConfig.BackSideProperties != null)
+            {
+                var backPrompt = File.ReadAllText($"prompts/{_gameName}/{typeConfig.BackSidePromptFile}");
+                var backPropertiesStringBuilder = new StringBuilder();
+                foreach (var property in typeConfig.BackSideProperties.Where(it => !it.Constant.HasValue))
+                {
+                    backPropertiesStringBuilder.AppendLine($"- {property.Alias} ({property.Description})");
+                }
+                backPrompt = backPrompt.Replace("{properties}", backPropertiesStringBuilder.ToString());
+
+                var backRequest = new GenerateContentRequest(backPrompt);
+                backRequest.GenerationConfig = generationConfig;
+                backRequest.AddPart(new InlineData
+                {
+                    Data = backImageBase64,
+                    MimeType = "image/png",
+                });
+
+                var backResponse = await model.GenerateContent(backRequest);
+                if (!string.IsNullOrWhiteSpace(backResponse?.Text))
+                {
+                    var backResult = JsonSerializer.Deserialize<Dictionary<string, string>>(backResponse.Text) ?? [];
+                    foreach (var constantValue in typeConfig.BackSideProperties.Where(it => it.Constant.HasValue))
+                    {
+                        backResult[constantValue.Alias] = constantValue.Constant!.Value.ToString();
+                    }
+                    foreach (var nonCapsKey in typeConfig.BackSideProperties.Where(it => it.ToTitleCase))
+                    {
+                        if (backResult.TryGetValue(nonCapsKey.Alias, out string? backValue) && !string.IsNullOrWhiteSpace(backValue))
+                        {
+                            backResult[nonCapsKey.Alias] = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(backValue.ToLower());
+                        }
+                    }
+                    foreach (var splitKey in typeConfig.BackSideProperties.Where(it => !string.IsNullOrWhiteSpace(it.Split)))
+                    {
+                        if (backResult.TryGetValue(splitKey.Alias, out string? backTraits))
+                        {
+                            backResult[splitKey.Alias] = string.Join(",", backTraits.Split(splitKey.Split).Select(it => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(it.Trim().ToLower())));
+                        }
+                    }
+                    foreach (var kvp in backResult)
+                    {
+                        result[kvp.Key] = kvp.Value;
+                    }
+                    result["back_image_base64"] = "[image]";
+                }
+            }
+
             result.Add("SWU Id", "[todo]");
             result.Add("TTS Id", "[todo]");
-            result.Add("Rarity", "[todo]");
             result.Add("image_base64", "[image]");
-            return result;
+            return (result, typeConfig.IsDoubleSided && backImageBase64 != null);
         }
 
         private void DownloadButton_Click(object sender, RoutedEventArgs e)
@@ -298,7 +556,19 @@ namespace CardReader
             var result = saveFileDialog.ShowDialog();
             if (result.HasValue && !string.IsNullOrWhiteSpace(saveFileDialog.FileName))
             {
-                File.WriteAllText(saveFileDialog.FileName, JsonSerializer.Serialize(_data));
+                var basePath = System.IO.Path.GetDirectoryName(saveFileDialog.FileName);
+                var baseFileName = System.IO.Path.GetFileNameWithoutExtension(saveFileDialog.FileName);
+                var fileExtension = System.IO.Path.GetExtension(saveFileDialog.FileName);
+                
+                const int itemsPerFile = 5;
+                var totalChunks = (int)Math.Ceiling((double)_data.Count / itemsPerFile);
+                
+                for (int i = 0; i < totalChunks; i++)
+                {
+                    var chunk = _data.Skip(i * itemsPerFile).Take(itemsPerFile).ToList();
+                    var fileName = System.IO.Path.Combine(basePath, $"{baseFileName}_{i + 1}{fileExtension}");
+                    File.WriteAllText(fileName, JsonSerializer.Serialize(chunk, new JsonSerializerOptions { WriteIndented = true }));
+                }
             }
         }
 
@@ -312,6 +582,10 @@ namespace CardReader
                     if (entry.ContainsKey("image_base64"))
                     {
                         entry["image_base64"] = _imageBase64;
+                    }
+                    if (entry.ContainsKey("back_image_base64"))
+                    {
+                        entry["back_image_base64"] = _backImageBase64;
                     }
 
                     _data.Add(entry);
@@ -331,9 +605,10 @@ namespace CardReader
 
         private void NextImageBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (fileNameIndex < fileNames.Length - 1)
+            int advance = _currentCardIsDoubleSided ? 2 : 1;
+            if (fileNameIndex + advance < fileNames.Length)
             {
-                fileNameIndex++;
+                fileNameIndex += advance;
                 HandleCurrentImage();
             }
         }
@@ -349,11 +624,12 @@ namespace CardReader
             var currentData = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(JsonExample.Text) ?? [];
             _ = Task.Run(async () =>
             {
-                var response = await httpClient.PostAsJsonAsync<SearchPostModel>("https://sw-unlimited-db.com/api/cards/query", new SearchPostModel
+                var response = await httpClient.PostAsJsonAsync<SearchPostModel>("https://api.sw-unlimited-db.com/api/cards/query", new SearchPostModel
                 {
                     PageNumber = 1,
                     PageSize = 10,
-                    Query = query
+                    Query = query,
+                    VariantTypeIds = [0]
                 });
                 var result = await response.Content.ReadFromJsonAsync<SearchResponseModel>();
                 if (result.Items.Length > 1)
@@ -419,7 +695,7 @@ namespace CardReader
 
         private AIConfigModel GetConfig()
         {
-            var configJson = File.ReadAllText("prompts/StarWarsUnlimited/Config.json");
+            var configJson = File.ReadAllText($"prompts/{_gameName}/Config.json");
             return JsonSerializer.Deserialize<AIConfigModel>(configJson) ?? throw new Exception("Failed to load config");
         }
 
@@ -430,20 +706,40 @@ namespace CardReader
             var listBoxItem = e.AddedItems.Cast<ListBoxItem>().FirstOrDefault();
             if (listBoxItem != null)
             {
-                var preset = config.Presets.FirstOrDefault(it => it.Id.ToString().Equals(listBoxItem.Tag?.ToString(), StringComparison.OrdinalIgnoreCase));
-                if (preset != null)
+                var presetId = (int?)listBoxItem.Tag;
+                if (presetId.HasValue)
                 {
-                    var data = new List<Dictionary<string, string>>();
-                    foreach (var variant in preset.Variants)
-                    {
-                        data.Add(variant.Properties);
-                    }
-
-                    JsonExample.Text = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+                    _selectedPresetId = presetId.Value;
                 }
             }
+            else
+            {
+                // If nothing is selected, clear the preset
+                _selectedPresetId = null;
+            }
 
-            PresetComboBox.SelectedIndex = -1;
+            // Update JsonExample immediately if a card is already loaded
+            if (fileNames.Length > 0 && _selectedPresetId.HasValue)
+            {
+                var preset = config.Presets.FirstOrDefault(it => it.Id == _selectedPresetId.Value);
+                if (preset != null)
+                {
+                    var presetData = new List<Dictionary<string, string>>();
+                    foreach (var variant in preset.Variants)
+                    {
+                        presetData.Add(variant.Properties);
+                    }
+                    JsonExample.Text = JsonSerializer.Serialize(presetData, new JsonSerializerOptions { WriteIndented = true });
+                }
+            }
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            _ = Task.Run(async () =>
+            {
+                await ReadWithAI(_imageBase64, _backImageBase64);
+            });
         }
     }
 }

@@ -13,7 +13,7 @@ namespace CardReader.models
         [JsonPropertyName("pageSize")]
         public int PageSize { get; set; } = 10;
 
-        [JsonPropertyName("variantTypeId")]
-        public int VariantTypeId { get; set; } = 0;
+        [JsonPropertyName("variantTypeIds")]
+        public int[] VariantTypeIds { get; set; } = [];
     }
 }

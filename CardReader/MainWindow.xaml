@@ -25,5 +25,15 @@
         <Label x:Name="FileNameLabel" Content="Label" HorizontalAlignment="Left" Margin="132,0,0,131" Grid.Row="1" VerticalAlignment="Bottom" RenderTransformOrigin="0.553,1.426" Height="26" Width="38"/>
         <ComboBox x:Name="PresetComboBox" HorizontalAlignment="Left" Margin="390,489,0,0" Grid.Row="1" VerticalAlignment="Top" Width="120" SelectionChanged="PresetComboBox_SelectionChanged"/>
 
+        <!-- Loading Indicator -->
+        <Border x:Name="LoadingIndicator" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Background="#CC000000" CornerRadius="10" Padding="40">
+            <StackPanel>
+                <TextBlock Text="Loading..." Foreground="White" FontSize="18" FontWeight="Bold" TextAlignment="Center" Margin="0,0,0,20"/>
+                <ProgressBar IsIndeterminate="True" Height="10" Width="200" Foreground="#0078D4"/>
+                <TextBlock x:Name="LoadingStatusText" Text="Processing with AI..." Foreground="White" FontSize="12" TextAlignment="Center" Margin="0,15,0,0"/>
+            </StackPanel>
+        </Border>
+        <Button Content="Reload AI" Margin="0,460,312,0" Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Right" Width="75" Click="Button_Click_1"/>
+
     </Grid>
 </Window>

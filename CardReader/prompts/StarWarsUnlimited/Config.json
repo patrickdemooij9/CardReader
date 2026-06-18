@@ -1,5 +1,5 @@
 {
-  "initialPrompt": "You are a bot able to read cards. I need you to read the attached card and provide me the type of card. You'll find it on the top and should be either Unit, Event or Upgrade. Only return the type.",
+  "initialPrompt": "You are a bot able to read cards. I need you to read the attached card and provide me the type of card. You'll find it on the top and should be either Unit, Event, Upgrade, Base or Leader. Only return the type.",
   "presets": [
     {
       "name": "Organized play",
@@ -17,9 +17,199 @@
         {
           "id": 8,
           "properties": {
-            "Name": "Organized play Foil",
+            "Name": "Organized play foil",
             "SWU Id": "",
             "VariantTypeId": "8"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Standard Prestige",
+      "id": 1,
+      "variants": [
+        {
+          "id": 9,
+          "properties": {
+            "Name": "Standard Prestige",
+            "SWU Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "9"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Showcase",
+      "id": 2,
+      "variants": [
+        {
+          "id": 4,
+          "properties": {
+            "Name": "Showcase",
+            "SWU Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "4"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Top 8",
+      "id": 3,
+      "variants": [
+        {
+          "id": 12,
+          "properties": {
+            "Name": "Top 8",
+            "SWU Id": "",
+            "TTS Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "12"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Top 4",
+      "id": 4,
+      "variants": [
+        {
+          "id": 13,
+          "properties": {
+            "Name": "Top 4",
+            "SWU Id": "",
+            "TTS Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "13"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Finalist",
+      "id": 5,
+      "variants": [
+        {
+          "id": 14,
+          "properties": {
+            "Name": "Finalist",
+            "SWU Id": "",
+            "TTS Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "14"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Champion",
+      "id": 6,
+      "variants": [
+        {
+          "id": 15,
+          "properties": {
+            "Name": "Champion",
+            "SWU Id": "",
+            "TTS Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "15"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Participation",
+      "id": 7,
+      "variants": [
+        {
+          "id": 16,
+          "properties": {
+            "Name": "Participation",
+            "SWU Id": "",
+            "TTS Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "16"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Judge",
+      "id": 8,
+      "variants": [
+        {
+          "id": 17,
+          "properties": {
+            "Name": "Judge",
+            "SWU Id": "",
+            "TTS Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "17"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Price wall",
+      "id": 9,
+      "variants": [
+        {
+          "id": 18,
+          "properties": {
+            "Name": "Price wall",
+            "SWU Id": "",
+            "TTS Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "18"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Event pack",
+      "id": 10,
+      "variants": [
+        {
+          "id": 19,
+          "properties": {
+            "Name": "Event pack",
+            "SWU Id": "",
+            "TTS Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "19"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Day two reward",
+      "id": 12,
+      "variants": [
+        {
+          "id": 20,
+          "properties": {
+            "Name": "Day two reward",
+            "SWU Id": "",
+            "TTS Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "20"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Event exclusive",
+      "id": 11,
+      "variants": [
+        {
+          "id": 6,
+          "properties": {
+            "Name": "Event exclusive",
+            "SWU Id": "",
+            "TTS Id": "",
+            "image_base64": "[image]",
+            "VariantTypeId": "6"
           }
         }
       ]
@@ -78,13 +268,17 @@
         },
         {
           "alias": "Aspects_multiple",
-          "description": "Located below the cost, can be multiple icons. Depending on the colors, return the following values: Red = Aggression, Blue = Vigilance, Green = Command, Yellow = Cunning, Black = Villainy. Return as a list seperated by commas.",
+          "description": "Located below the cost, can be multiple icons. Depending on the colors, return the following values: Red circular icon = Aggression, Blue icon = Vigilance, Green icon = Command, Yellow spiral icon = Cunning, Black Imperial-style icon = Villainy, White Rebel-style icon = Heroism. Return as a list seperated by commas.",
           "toTitleCase": false,
           "split": ","
         },
         {
           "alias": "Amount",
           "constant": 3
+        },
+        {
+          "alias": "Rarity",
+          "description": "Located in the bottom right corner between EN and the card number. Depending on the character shown, return the following values: S = Starter, C = Common, U = Uncommon, R = Rare, L = Legendary. If you don't see any, just return TODO. Otherwise ALWAYS return one of those values."
         }
       ]
     },
@@ -120,13 +314,17 @@
         },
         {
           "alias": "Aspects_multiple",
-          "description": "Located below the cost, can be multiple icons. Depending on the colors, return the following values: Red = Aggression, Blue = Vigilance, Green = Command, Yellow = Cunning, Black = Villainy. Return as a list seperated by commas.",
+          "description": "Located below the cost, can be multiple icons. Depending on the colors, return the following values: Red circular icon = Aggression, Blue icon = Vigilance, Green icon = Command, Yellow spiral icon = Cunning, Black Imperial-style icon = Villainy, White Rebel-style icon = Heroism. Return as a list seperated by commas.",
           "toTitleCase": false,
           "split": ","
         },
         {
           "alias": "Amount",
           "constant": 3
+        },
+        {
+          "alias": "Rarity",
+          "description": "Read the rarity letter located between the language code (EN) and the card number in the bottom right of the card. The visible letter must be exactly one of: S, C, U, R, L. Convert it using: S = Starter, C = Common, U = Uncommon, R = Rare, L = Legendary. Return the full word, never the letter. If the letter cannot be read with confidence, return TODO."
         }
       ]
     },
@@ -158,6 +356,11 @@
           "toTitleCase": true
         },
         {
+          "alias": "Subname",
+          "description": "Optionally, under the name",
+          "toTitleCase": true
+        },
+        {
           "alias": "Traits_multiple",
           "description": "Located under the Name",
           "toTitleCase": true,
@@ -170,13 +373,144 @@
         },
         {
           "alias": "Aspects_multiple",
-          "description": "Located below the cost, can be multiple icons. Depending on the colors, return the following values: Red = Aggression, Blue = Vigilance, Green = Command, Yellow = Cunning, Black = Villainy. Return as a list seperated by commas.",
+          "description": "Located below the cost, can be multiple icons. Depending on the colors, return the following values: Red circular icon = Aggression, Blue icon = Vigilance, Green icon = Command, Yellow spiral icon = Cunning, Black Imperial-style icon = Villainy, White Rebel-style icon = Heroism. Return as a list seperated by commas.",
           "toTitleCase": false,
           "split": ","
         },
         {
           "alias": "Amount",
           "constant": 3
+        },
+        {
+          "alias": "Rarity",
+          "description": "Read the rarity letter located between the language code (EN) and the card number in the bottom right of the card. The visible letter must be exactly one of: S, C, U, R, L. Convert it using: S = Starter, C = Common, U = Uncommon, R = Rare, L = Legendary. Return the full word, never the letter. If the letter cannot be read with confidence, return TODO."
+        }
+      ]
+    },
+    {
+      "type": "Base",
+      "promptFile": "BasePrompt.txt",
+      "properties": [
+        {
+          "alias": "Health",
+          "description": "Located in the blue icon on the top left of the image"
+        },
+        {
+          "alias": "Card Type",
+          "description": "Top, either Unit, Upgrade, Event or Base",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Name",
+          "description": "Under type, in the middle of the screen",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Traits_multiple",
+          "description": "Located almost at the bottom of the card. Below the Abilities if there are any",
+          "toTitleCase": true,
+          "split": "•"
+        },
+        {
+          "alias": "Abilities",
+          "description": "Located under the image of the card, main area. Might be missing if it doesn't have one",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Aspects_multiple",
+"description": "Located below the cost, can be multiple icons. Depending on the colors, return the following values: Red circular icon = Aggression, Blue icon = Vigilance, Green icon = Command, Yellow spiral icon = Cunning, Black Imperial-style icon = Villainy, White Rebel-style icon = Heroism. Return as a list seperated by commas.",          "toTitleCase": false,
+          "split": ","
+        },
+        {
+          "alias": "Amount",
+          "constant": 1
+        },
+        {
+          "alias": "Rarity",
+          "description": "Read the rarity letter located between the language code (EN) and the card number in the bottom right of the card. The visible letter must be exactly one of: S, C, U, R, L. Convert it using: S = Starter, C = Common, U = Uncommon, R = Rare, L = Legendary. Return the full word, never the letter. If the letter cannot be read with confidence, return TODO."
+        }
+      ]
+    },
+    {
+      "type": "Leader",
+      "isDoubleSided": true,
+      "promptFile": "BasePrompt.txt",
+      "backSidePromptFile": "BasePrompt.txt",
+      "properties": [
+        {
+          "alias": "Cost",
+          "description": "Top left of the card",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Card Type",
+          "description": "Top, should be Leader",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Name",
+          "description": "The name of the card",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Subname",
+          "description": "Optionally, under the name",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Location",
+          "description": "To the right of Card Type, either Space, Ground",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Traits_multiple",
+          "description": "Located under the name, separated by dots",
+          "toTitleCase": true,
+          "split": "\u2022"
+        },
+        {
+          "alias": "Abilities",
+          "description": "The action ability text on the front side. Surround bold text with the | character.",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Aspects_multiple",
+          "description": "Located below the cost, can be multiple icons. Depending on the colors, return the following values: Red circular icon = Aggression, Blue icon = Vigilance, Green icon = Command, Yellow spiral icon = Cunning, Black Imperial-style icon = Villainy, White Rebel-style icon = Heroism. Return as a list seperated by commas.",
+          "toTitleCase": false,
+          "split": ","
+        },
+        {
+          "alias": "Amount",
+          "constant": 1
+        },
+        {
+          "alias": "Power",
+          "description": "Located in the red icon",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Health",
+          "description": "Located in the blue icon",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Twin Sun Color_multiple",
+          "description": "Black if the unit has the aspect Villainy, White if it has Heroism. If both, seperate by ,"
+        }
+      ],
+      "backSideProperties": [
+        {
+          "alias": "Hero Abilities",
+          "description": "Located in the main area. Surround bold text with the | character.",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Epic Action",
+          "description": "Located below the hero abilities. Everything after 'Epic Action'. Don't include the 'Epic Action' in your answer."
+        },
+        {
+          "alias": "Rarity",
+          "description": "Read the rarity letter located between the language code (EN) and the card number in the bottom right of the card. The visible letter must be exactly one of: S, C, U, R, L. Convert it using: S = Starter, C = Common, U = Uncommon, R = Rare, L = Legendary. Return the full word, never the letter. If the letter cannot be read with confidence, return TODO."
         }
       ]
     }

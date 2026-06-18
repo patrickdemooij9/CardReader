@@ -1,0 +1,247 @@
+{
+  "initialPrompt": "You are a bot able to read cards. I need you to read the attached card and provide me the type of card. You'll find it on the top right and should be either Legend, Unit, Gear, or Program. Only return the type.",
+  "presets": [
+    
+  ],
+  "types": [
+    {
+      "type": "Legend",
+      "promptFile": "Prompt.txt",
+      "properties": [
+        {
+          "alias": "Card Type",
+          "description": "Top right, either Legend, Unit, Gear, or Program",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Ram_multiple",
+          "description": "Below the card type, is indicated 'x [number]'. Return the color (either Red, Blue, Green or Yellow) x amount of times like this: X 2 with color Red -> Red,Red",
+          "toTitleCase": true,
+          "split": ","
+        },
+        {
+          "alias": "Cost",
+          "description": "Top left corner. Trim off the first 0 if there is one. Optional if it just displays -",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Sell Tag",
+          "description": "Optionally, below the cost. If it contains €$, return true otherwise false",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Name",
+          "description": "Located on the top middle of the card. Is the bolded piece of text above the subname",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Subname",
+          "description": "Piece of text located below the Name",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Traits_multiple",
+          "description": "Located above the main body of text, usually surrounded with a box. Give back all traits as a list separated by , like: Ganger,Corpo",
+          "toTitleCase": true,
+          "split": ","
+        },
+        {
+          "alias": "Abilities",
+          "description": "Located under tags in the big area. Surround bold text with the | character. Use \r for linebreaks and use + instead of \u002B where needed.",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Power",
+          "description": "Located on the bottom right of the card. Only include the number, don't include any characters behind it.",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Amount",
+          "constant": 1
+        },
+        {
+          "alias": "CardNumber",
+          "description": "Located in the bottom left corner on an angle. Only return the numbers including any 0 in front of it"
+        }
+      ]
+    },
+    {
+      "type": "Unit",
+      "promptFile": "Prompt.txt",
+      "properties": [
+        {
+          "alias": "Card Type",
+          "description": "Top right, either Legend, Unit, Gear, or Program",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Ram_multiple",
+          "description": "Below the card type, is indicated 'x [number]'. Return the color (either Red, Blue, Green or Yellow) x amount of times like this: X 2 with color Red -> Red,Red",
+          "toTitleCase": true,
+          "split": ","
+        },
+        {
+          "alias": "Cost",
+          "description": "Top left corner. Trim off the first 0 if there is one. Optional if it just displays -",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Sell Tag",
+          "description": "Optionally, below the cost. If it contains €$, return true otherwise false",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Name",
+          "description": "Located above the main text and the traits (and subname if available). Somewhere in the middle of the card. Usually a bold text",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Subname",
+          "description": "Piece of text located below the Name",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Traits_multiple",
+          "description": "Located above the main body of text, usually surrounded with a box. Give back all traits as a list separated by , like: Ganger,Corpo",
+          "toTitleCase": true,
+          "split": ","
+        },
+        {
+          "alias": "Abilities",
+          "description": "Located under tags in the big area. Surround bold text with the | character. Use \r for linebreaks and use + instead of \u002B where needed.",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Power",
+          "description": "Located on the bottom right of the card. Only include the number, don't include any characters behind it.",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Amount",
+          "constant": 3
+        },
+        {
+          "alias": "CardNumber",
+          "description": "Located in the bottom left corner on an angle. Only return the numbers including any 0 in front of it"
+        }
+      ]
+    },
+    {
+      "type": "Gear",
+      "promptFile": "Prompt.txt",
+      "properties": [
+        {
+          "alias": "Card Type",
+          "description": "Top right, either Legend, Unit, Gear, or Program",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Ram_multiple",
+          "description": "Below the card type, is indicated 'x [number]'. Return the color (either Red, Blue, Green or Yellow) x amount of times like this: X 2 with color Red -> Red,Red",
+          "toTitleCase": true,
+          "split": ","
+        },
+        {
+          "alias": "Cost",
+          "description": "Top left corner. Trim off the first 0 if there is one. Optional if it just displays -",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Sell Tag",
+          "description": "Optionally, below the cost. If it contains €$, return true otherwise false",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Name",
+          "description": "Located above the main text and the traits (and subname if available). Somewhere in the middle of the card. Usually a bold text",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Subname",
+          "description": "Piece of text located below the Name",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Traits_multiple",
+          "description": "Located above the main body of text, usually surrounded with a box. Give back all traits as a list separated by , like: Ganger,Corpo",
+          "toTitleCase": true,
+          "split": ","
+        },
+        {
+          "alias": "Abilities",
+          "description": "Located under tags in the big area. Surround bold text with the | character. Use \r for linebreaks and use + instead of \u002B where needed.",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Power",
+          "description": "Located on the bottom right of the card. Only include the number, don't include any characters behind it.",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Amount",
+          "constant": 3
+        },
+        {
+          "alias": "CardNumber",
+          "description": "Located in the bottom left corner on an angle. Only return the numbers including any 0 in front of it"
+        }
+      ]
+    },
+    {
+      "type": "Program",
+      "promptFile": "Prompt.txt",
+      "properties": [
+        {
+          "alias": "Card Type",
+          "description": "Top right, either Legend, Unit, Gear, or Program",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Ram_multiple",
+          "description": "Below the card type, is indicated 'x [number]'. Return the color (either Red, Blue, Green or Yellow) x amount of times like this: X 2 with color Red -> Red,Red",
+          "toTitleCase": true,
+          "split": ","
+        },
+        {
+          "alias": "Cost",
+          "description": "Top left corner. Trim off the first 0 if there is one. Optional if it just displays -",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Sell Tag",
+          "description": "Optionally, below the cost. If it contains €$, return true otherwise false",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Name",
+          "description": "Located above the main text and the traits (and subname if available). Somewhere in the middle of the card. Usually a bold text",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Subname",
+          "description": "Piece of text located below the Name",
+          "toTitleCase": true
+        },
+        {
+          "alias": "Traits_multiple",
+          "description": "Located above the main body of text, usually surrounded with a box. Give back all traits as a list separated by , like: Ganger,Corpo",
+          "toTitleCase": true,
+          "split": ","
+        },
+        {
+          "alias": "Abilities",
+          "description": "Located under tags in the big area. Surround bold text with the | character. Use \r for linebreaks and use + instead of \u002B where needed.",
+          "toTitleCase": false
+        },
+        {
+          "alias": "Amount",
+          "constant": 3
+        },
+        {
+          "alias": "CardNumber",
+          "description": "Located in the bottom left corner on an angle. Only return the numbers including any 0 in front of it"
+        }
+      ]
+    }
+  ]
+}
